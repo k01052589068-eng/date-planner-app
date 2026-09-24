@@ -3,6 +3,7 @@ import { logOut } from '../auth.jsx'
 import { useCouple } from '../CoupleProvider.jsx'
 import { leaveCouple } from '../couple.js'
 import Avatar from '../components/Avatar.jsx'
+import DatePreferences from '../components/DatePreferences.jsx'
 import InviteCard from '../components/InviteCard.jsx'
 import JoinForm from '../components/JoinForm.jsx'
 import { getPendingInvite } from '../pendingInvite.js'
@@ -18,7 +19,8 @@ export default function Settings() {
       <CoupleSection />
 
       <h2 className="section-title">데이트 취향</h2>
-      <p className="placeholder">기준 위치, 이동 반경, 취향, 새로움 빈도, 추천 개수를 설정합니다. (2단계에서 구현)</p>
+      <p className="muted small section-hint">둘이 함께 쓰는 설정이에요. 바꾸면 상대 화면에도 바로 반영돼요.</p>
+      <DatePreferences />
 
       <h2 className="section-title">계정</h2>
       <div className="card row">
