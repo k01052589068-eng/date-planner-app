@@ -1,0 +1,66 @@
+# A 파이프라인: 매주 월요일 0시(KST) TourAPI 수집 → 코스 조합 → Firestore coursePool 업로드
+# 필요한 Secrets: TOURAPI_KEY, FIREBASE_SERVICE_ACCOUNT(서비스 계정 키 JSON 전체)
+name: 주간 코스 풀
+
+on:
+  schedule:
+    - cron: '0 15 * * 0' # 일요일 15:00 UTC = 월요일 00:00 KST
+  workflow_dispatch:
+    inputs:
+      week:
+        description: '주차 (예: 2026-W40). 비우면 이번 주'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: write # 예약 실행 유지(아래 마지막 단계)
+
+concurrency:
+  group: weekly-course-pool
+  cancel-in-progress: false
+
+jobs:
+  course-pool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: scripts
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: scripts/package-lock.json
+
+      - run: npm ci
+
+      - name: 단위 테스트
+        run: npm test
+
+      - name: 코스 풀 생성·업로드
+        env:
+          TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          WEEK: ${{ inputs.week }}
+        run: npm run weekly -- --upload ${WEEK:+--week "$WEEK"}
+
+      # 만든 코스를 2주간 내려받아 볼 수 있게 남긴다 (Actions 실행 화면 → Artifacts)
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: course-pool
+          path: data/output/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # 공개 저장소는 60일 동안 커밋이 없으면 예약 실행이 자동으로 꺼진다.
+      # 매주 워크플로를 다시 활성화해 그 기한을 연장한다.
+      - name: 예약 실행 유지
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/weekly.yml/enable"
