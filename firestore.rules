@@ -140,5 +140,11 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
     }
+
+    // 찾기 탭 즉석 조합용 장소 캐시
+    match /places/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
   }
 }

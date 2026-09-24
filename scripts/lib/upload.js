@@ -44,6 +44,33 @@ export async function uploadPools(db, week, pools) {
   return Object.keys(pools).length
 }
 
+function checkSize(label, data) {
+  const bytes = Buffer.byteLength(JSON.stringify(data))
+  if (bytes > MAX_DOC_BYTES) throw new Error(`${label} 문서가 너무 커요 (${Math.round(bytes / 1024)}KB).`)
+  return bytes
+}
+
+/**
+ * 찾기 탭 캐시를 쓴다.
+ *   events/{sidoKey}: 앞으로 90일 행사 코스 (merge — 8단계 C 파이프라인이 trendCourses 를 더한다)
+ *   places/{sidoKey}: 즉석 조합용 장소 목록 (압축 문자열)
+ * 문서가 크므로 지역마다 따로 쓴다.
+ */
+export async function uploadSearchCache(db, week, events, places) {
+  let bytes = 0
+  for (const [sido, courses] of Object.entries(events.bySido)) {
+    const data = { sido, sidoKey: sidoKey(sido), weekId: week.weekId, range: events.range, courses, generatedAt: FieldValue.serverTimestamp() }
+    bytes += checkSize(`events/${sido}`, data)
+    await db.doc(`events/${sidoKey(sido)}`).set(data, { merge: true })
+  }
+  for (const [sido, lists] of Object.entries(places)) {
+    const data = { sido, sidoKey: sidoKey(sido), weekId: week.weekId, ...lists, generatedAt: FieldValue.serverTimestamp() }
+    bytes += checkSize(`places/${sido}`, data)
+    await db.doc(`places/${sidoKey(sido)}`).set(data)
+  }
+  return bytes
+}
+
 /** 보관 기간이 지난 주차의 풀을 지운다. 지운 문서 수를 돌려준다. */
 export async function deleteOldPools(db, week) {
   const cutoff = weeksBefore(week.weekId, KEEP_WEEKS)

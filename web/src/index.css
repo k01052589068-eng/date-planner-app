@@ -667,3 +667,24 @@ a.btn {
 .course-body .button-row .btn {
   flex: 1;
 }
+
+/* ---------- 찾기 ---------- */
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-range .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-results {
+  margin-top: 8px;
+}
+
+.section-title .count {
+  margin-left: 4px;
+  color: var(--color-primary);
+}

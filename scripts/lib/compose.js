@@ -1,18 +1,16 @@
-import { SIDO, sidoKey } from '../../web/src/shared/regions.js'
-import { GridIndex } from './geo.js'
+import { buildCourse, composeContext, encodePlace } from '../../web/src/shared/compose.js'
 import { seededRandom, shuffle } from '../../web/src/shared/random.js'
+import { SIDO, sidoKey } from '../../web/src/shared/regions.js'
+import { addDays } from '../../web/src/shared/week.js'
 
-// 코스 조합 규칙 (명세 §5-3): 메인 1곳 + 주변 식사/카페 1곳 + 선택 1곳
-const FOOD_RADIUS_KM = 2
-const FOOD_FALLBACK_RADIUS_KM = 3 // 2km 안에 없으면 조금 넓혀 본다
-const EXTRA_RADIUS_KM = 2
-const FOOD_PICK_FROM = 5 // 가까운 후보 몇 곳 중에서 고를지 (매주 다른 곳이 나오게)
-const MAX_FOOD_REUSE = 2 // 한 지역 풀에서 같은 식당이 반복되는 횟수 제한
-
-// 지역별 풀 크기
+// 지역별 주간 풀 크기
 const MAX_IRREGULAR = 40
 const MAX_REGULAR = 50
 const MAX_SEASONAL = 15 // 정기 코스 중 계절 키워드로 찾은 곳 최대 개수
+
+export const EVENT_WINDOW_DAYS = 90 // 행사 캐시: 앞으로 90일 (명세 §5-4)
+
+const overlaps = (period, start, end) => period && period.start <= end && period.end >= start
 
 /**
  * 한 주의 코스 풀을 지역별로 만든다.
@@ -22,26 +20,17 @@ const MAX_SEASONAL = 15 // 정기 코스 중 계절 키워드로 찾은 곳 최�
  * @returns { [sido]: course[] }
  */
 export function composeWeek({ week, places, festivals, seasonal = new Map() }) {
-  const foods = places.filter((p) => p.role === 'food')
-  const foodIndex = new GridIndex(foods)
-  const mainIndex = new GridIndex(places.filter((p) => p.role === 'main' && p.image))
-
   const pools = {}
   for (const { name: sido } of SIDO) {
     const rand = seededRandom(`${week.weekId}:${sido}`)
-    const foodUse = new Map()
-    const ctx = { rand, foodIndex, mainIndex, foodUse }
+    const ctx = composeContext(places, rand)
 
     // 이번 주(월~일)와 기간이 겹치는 행사
     const events = shuffle(
-      festivals.filter((f) => f.sido === sido && f.period && f.period.start <= week.end && f.period.end >= week.start),
+      festivals.filter((f) => f.sido === sido && overlaps(f.period, week.start, week.end)),
       rand,
     )
-    const irregular = []
-    for (const ev of events) {
-      if (irregular.length >= MAX_IRREGULAR) break
-      irregular.push(buildCourse(ev, ctx, { kind: 'irregular', requireFood: false }))
-    }
+    const irregular = events.slice(0, MAX_IRREGULAR).map((ev) => buildCourse(ev, ctx, { kind: 'irregular', requireFood: false }))
 
     // 상시 코스: 계절 키워드 장소를 먼저, 나머지는 테마별로 고르게
     const mains = places.filter((p) => p.sido === sido && p.role === 'main' && p.image)
@@ -75,7 +64,7 @@ export function composeWeek({ week, places, festivals, seasonal = new Map() }) {
     }
 
     const key = sidoKey(sido)
-    pools[sido] = [...irregular, ...regular].filter(Boolean).map((c, i) => ({
+    pools[sido] = [...irregular, ...regular].map((c, i) => ({
       id: `${week.weekId}-${key}-${String(i + 1).padStart(3, '0')}`,
       weekId: week.weekId,
       source: 'A',
@@ -85,102 +74,34 @@ export function composeWeek({ week, places, festivals, seasonal = new Map() }) {
   return pools
 }
 
-function buildCourse(main, ctx, { kind, requireFood, seasonNote = null }) {
-  const food = pickFood(main, ctx, 'meal') ?? pickFood(main, ctx, 'cafe')
-  if (requireFood && !food) return null
-
-  // 선택 정류장: 식사를 골랐으면 카페, 아니면 근처 다른 볼거리
-  let extra = food?.point.food.kind === 'meal' ? pickFood(main, ctx, 'cafe') : null
-  if (!extra) extra = pickExtraPlace(main, ctx)
-
-  const stops = [
-    stopOf(main, kind === 'irregular' ? 'event' : 'place', 0),
-    food && stopOf(food.point, food.point.food.kind, food.distKm),
-    extra && stopOf(extra.point, extra.point.role === 'food' ? extra.point.food.kind : 'place', extra.distKm),
-  ]
-    .filter(Boolean)
-    .map((s, i) => ({ order: i + 1, ...s }))
-
-  for (const s of [food, extra]) {
-    if (s?.point.role === 'food') ctx.foodUse.set(s.point.contentId, (ctx.foodUse.get(s.point.contentId) ?? 0) + 1)
+/**
+ * 찾기 탭용 행사 캐시: 이번 주 월요일부터 90일 안에 열리는 행사를 지역별 코스로.
+ * @returns { range: {start,end}, bySido: { [sido]: course[] } }
+ */
+export function composeEvents({ week, places, festivals }) {
+  const range = { start: week.start, end: addDays(week.start, EVENT_WINDOW_DAYS) }
+  const bySido = {}
+  for (const { name: sido } of SIDO) {
+    const ctx = composeContext(places, seededRandom(`events:${week.weekId}:${sido}`))
+    bySido[sido] = festivals
+      .filter((f) => f.sido === sido && overlaps(f.period, range.start, range.end))
+      .sort((a, b) => a.period.start.localeCompare(b.period.start))
+      .map((ev) => ({
+        id: `event-${ev.contentId}`,
+        source: 'A',
+        ...buildCourse(ev, ctx, { kind: 'irregular', requireFood: false }),
+      }))
   }
+  return { range, bySido }
+}
 
-  const themes = [...new Set([...main.themes, ...(extra?.point.role === 'main' ? extra.point.themes : [])])]
-
-  return {
-    kind,
-    title: titleOf(main, food?.point, extra?.point),
-    summary: summaryOf(main, food, extra),
-    themes,
-    sido: main.sido,
-    sigungu: main.sigungu,
-    lat: main.lat,
-    lng: main.lng,
-    period: main.period ?? null,
-    image: main.image,
-    stops,
-    sources: [],
-    seasonNote,
+/** 찾기 탭의 즉석 조합용 장소 캐시: 지역별 메인(사진 있는 곳)·식사 장소를 압축 문자열로 */
+export function placeCache(places) {
+  const bySido = {}
+  for (const { name: sido } of SIDO) bySido[sido] = { main: [], food: [] }
+  for (const p of places) {
+    if (p.role === 'main' && p.image && !p.period) bySido[p.sido].main.push(encodePlace(p))
+    else if (p.role === 'food') bySido[p.sido].food.push(encodePlace(p))
   }
-}
-
-function pickFood(main, ctx, kind) {
-  for (const radius of [FOOD_RADIUS_KM, FOOD_FALLBACK_RADIUS_KM]) {
-    const candidates = ctx.foodIndex
-      .near(main, radius)
-      .filter(({ point }) => point.food.kind === kind && (ctx.foodUse.get(point.contentId) ?? 0) < MAX_FOOD_REUSE)
-    if (!candidates.length) continue
-    // 사진이 있는 곳을 조금 더 앞에
-    const ranked = [...candidates.filter((c) => c.point.image), ...candidates.filter((c) => !c.point.image)]
-    const pool = ranked.slice(0, FOOD_PICK_FROM)
-    return pool[Math.floor(ctx.rand() * pool.length)]
-  }
-  return null
-}
-
-function pickExtraPlace(main, ctx) {
-  const candidates = ctx.mainIndex
-    .near(main, EXTRA_RADIUS_KM)
-    .filter(({ point }) => point.contentId !== main.contentId && point.name !== main.name && !point.period)
-  if (!candidates.length) return null
-  const pool = candidates.slice(0, FOOD_PICK_FROM)
-  return pool[Math.floor(ctx.rand() * pool.length)]
-}
-
-function stopOf(p, type, distKm) {
-  return {
-    name: p.name,
-    type,
-    lat: p.lat,
-    lng: p.lng,
-    addr: p.addr,
-    contentId: p.contentId,
-    url: '',
-    distKm: Math.round(distKm * 10) / 10,
-    ...(p.role === 'food' ? { label: p.food.label } : {}),
-  }
-}
-
-function foodPhrase(food) {
-  return food.food.kind === 'cafe' ? food.food.label : `${food.food.label} 맛집`
-}
-
-/** 제목용 짧은 이름: '신선대와 억새평전 (무등산권 국가지질공원)' → '신선대와 억새평전' */
-function shortName(name) {
-  return name.replace(/\s*[(（[][^)）\]]*[)）\]]/g, '').trim() || name
-}
-
-function titleOf(main, food, extra) {
-  const head = [shortName(main.name), main.verb].filter(Boolean).join(' ')
-  const tail = [food && foodPhrase(food), extra && (extra.role === 'food' ? foodPhrase(extra) : shortName(extra.name))].filter(Boolean)
-  return [head, ...tail].join(' + ')
-}
-
-function summaryOf(main, food, extra) {
-  const where = [main.sigungu, main.name].filter(Boolean).join(' ')
-  if (!food) return `${where}에서 즐기는 데이트`
-  const walk = (d) => (d <= 1.5 ? `걸어서 ${Math.max(1, Math.round((d / 4) * 60))}분` : `약 ${d.toFixed(1)}km`)
-  const parts = [`${where} 들렀다가 ${walk(food.distKm)} 거리 ${food.point.name}에서 ${food.point.food.kind === 'cafe' ? '쉬어 가기' : '식사'}`]
-  if (extra) parts.push(extra.point.role === 'food' ? `${extra.point.name}에서 마무리` : `${extra.point.name}까지 둘러보기`)
-  return parts.join(', ')
+  return bySido
 }

@@ -5,7 +5,8 @@ import CourseMap from './CourseMap.jsx'
 
 const STOP_TYPE = { event: '행사', place: '볼거리', meal: '식사', cafe: '카페' }
 
-export default function CourseCard({ course }) {
+/** distanceFrom: 거리 문구의 기준 ('기준 위치', 검색한 장소 이름 등) */
+export default function CourseCard({ course, distanceFrom = '기준 위치' }) {
   const navigate = useNavigate()
   const main = course.stops[0]
   const place = [course.sido, course.sigungu].filter(Boolean).join(' ')
@@ -30,7 +31,7 @@ export default function CourseCard({ course }) {
         <h2 className="course-title">{course.title}</h2>
         <p className="muted small">
           {place}
-          {course.distKm != null && ` · 기준 위치에서 ${course.distKm}km`}
+          {course.distKm != null && ` · ${distanceFrom}에서 ${course.distKm}km`}
           {course.period && ` · ${periodLabel(course.period, kstDate())}`}
         </p>
         {course.summary && <p className="course-summary">{course.summary}</p>}

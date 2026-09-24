@@ -7,10 +7,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { parseArgs } from 'node:util'
 import { sidoKey } from '../web/src/shared/regions.js'
-import { composeWeek } from './lib/compose.js'
+import { composeEvents, composeWeek, placeCache } from './lib/compose.js'
 import { normalizePlace } from './lib/places.js'
 import { TourApi } from './lib/tourapi.js'
-import { deleteOldPools, initFirestore, uploadPools } from './lib/upload.js'
+import { deleteOldPools, initFirestore, uploadPools, uploadSearchCache } from './lib/upload.js'
 import { addDays, kstDate, toCompact, weekFromId, weekOf } from '../web/src/shared/week.js'
 
 const ROOT = new URL('../', import.meta.url)
@@ -85,6 +85,9 @@ const festivals = rawFestivals.map(normalizePlace).filter((p) => p?.period)
 
 // 3) 조합
 const pools = composeWeek({ week, places, festivals, seasonal })
+// 찾기 탭 캐시: 앞으로 90일 행사 + 즉석 조합용 장소
+const events = composeEvents({ week, places, festivals })
+const placesBySido = placeCache(places)
 
 // 4) 저장·요약
 const outDir = new URL(`data/output/${week.weekId}/`, ROOT)
@@ -102,6 +105,10 @@ for (const [sido, courses] of Object.entries(pools)) {
 }
 console.log(`\n총 ${total}개 코스 → data/output/${week.weekId}/`)
 console.log('테마별:', Object.entries(themeCount).map(([t, n]) => `${t} ${n}`).join(', '))
+const eventCount = Object.values(events.bySido).reduce((n, list) => n + list.length, 0)
+const placeCount = Object.values(placesBySido).reduce((n, l) => n + l.main.length + l.food.length, 0)
+console.log(`찾기 캐시: 행사 ${eventCount}건 (${events.range.start} ~ ${events.range.end}), 장소 ${placeCount.toLocaleString()}곳`)
+await writeFile(new URL('events.json', outDir), JSON.stringify(events, null, 2))
 
 // 5) 업로드
 if (args.upload) {
@@ -109,6 +116,8 @@ if (args.upload) {
   const written = await uploadPools(db, week, pools)
   const deleted = await deleteOldPools(db, week)
   console.log(`\n✔ Firestore 업로드: coursePool 문서 ${written}개, 오래된 풀 ${deleted}개 삭제`)
+  const cacheBytes = await uploadSearchCache(db, week, events, placesBySido)
+  console.log(`✔ 찾기 캐시 업로드: events·places 문서 ${Object.keys(events.bySido).length * 2}개 (${Math.round(cacheBytes / 1024)}KB)`)
 } else {
   console.log('\n(업로드하지 않았어요. 올리려면 --upload)')
 }

@@ -291,4 +291,16 @@ describe('코스 풀·행사 캐시', () => {
     await assertFails(setDoc(doc(db('alice'), 'coursePool', '2026-W39_seoul'), { courses: [] }))
     await assertFails(setDoc(doc(db('alice'), 'events', 'seoul'), { items: [] }))
   })
+
+  test('행사·장소 캐시도 로그인 사용자 읽기 전용', async () => {
+    await seed(async (fs) => {
+      await setDoc(doc(fs, 'events', 'seoul'), { courses: [] })
+      await setDoc(doc(fs, 'places', 'seoul'), { main: [], food: [] })
+    })
+    for (const col of ['events', 'places']) {
+      await assertSucceeds(getDoc(doc(db('alice'), col, 'seoul')))
+      await assertFails(getDoc(doc(anon(), col, 'seoul')))
+      await assertFails(setDoc(doc(db('alice'), col, 'seoul'), { courses: [] }))
+    }
+  })
 })

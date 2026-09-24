@@ -54,7 +54,8 @@ npm test                           # 주차·지역·분류·조합 단위 테�
 - 매주 전체 수집 (API 호출 약 40회, 개발계정 일 1,000회 한도)
 - 지역은 16개. 2026년 통합된 광주·전남은 `전남광주` 하나로 다룬다 (`web/src/regions.js`, 앱과 공용)
 - 자동 실행: `.github/workflows/weekly.yml` — 매주 월요일 00:00 KST, Actions 탭에서 수동 실행(주차 지정 가능). Secrets `TOURAPI_KEY`, `FIREBASE_SERVICE_ACCOUNT` 필요
-- 분류 → 취향 매핑: `scripts/lib/places.js`, 조합 규칙: `scripts/lib/compose.js`, 계절 키워드: `data/templates/seasons.json`
+- 찾기 탭 캐시도 함께 올린다: `events/{지역}`(앞으로 90일 행사 코스), `places/{지역}`(즉석 조합용 장소, 압축 문자열)
+- 분류 → 취향 매핑: `web/src/shared/categories.js`, 조합 규칙: `web/src/shared/compose.js` (앱의 즉석 조합과 공용), 계절 키워드: `data/templates/seasons.json`
 
 ## 배포
 

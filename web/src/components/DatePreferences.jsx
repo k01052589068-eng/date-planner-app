@@ -11,6 +11,7 @@ import {
   withDefaults,
 } from '../settings.js'
 import BaseMap from './BaseMap.jsx'
+import Chip from './Chip.jsx'
 import PlacePicker from './PlacePicker.jsx'
 
 /** 설정 탭의 데이트 취향 (커플 공유, 항목별 즉시 저장) */
@@ -157,13 +158,5 @@ export default function DatePreferences() {
       {error && <p className="error">{error}</p>}
       {picking && <PlacePicker title="기준 위치 검색" onSelect={handleSelectBase} onClose={closePicker} />}
     </>
-  )
-}
-
-function Chip({ selected, onClick, children }) {
-  return (
-    <button type="button" className={`chip${selected ? ' selected' : ''}`} aria-pressed={selected} onClick={onClick}>
-      {children}
-    </button>
   )
 }
