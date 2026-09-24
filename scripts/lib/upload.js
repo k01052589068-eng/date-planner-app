@@ -1,7 +1,7 @@
 import { applicationDefault, cert, initializeApp } from 'firebase-admin/app'
 import { FieldValue, getFirestore } from 'firebase-admin/firestore'
-import { sidoKey } from '../../web/src/shared/regions.js'
-import { weeksBefore } from '../../web/src/shared/week.js'
+import { SIDO, sidoKey } from '../../web/src/shared/regions.js'
+import { addDays, weeksBefore } from '../../web/src/shared/week.js'
 
 const KEEP_WEEKS = 4 // 이번 주 + 지난 4주 풀을 남긴다 (명세: 지난 주차는 4주 후 삭제)
 const MAX_DOC_BYTES = 900 * 1024 // Firestore 문서 한도 1MiB 에 여유를 둔다
@@ -69,6 +69,40 @@ export async function uploadSearchCache(db, week, events, places) {
     await db.doc(`places/${sidoKey(sido)}`).set(data)
   }
   return bytes
+}
+
+/**
+ * C 파이프라인 트렌드 코스를 합친다.
+ *   coursePool/{weekId}_{sidoKey}.trendCourses — 그 주 추천 후보 (A 코스는 건드리지 않음)
+ *   events/{sidoKey}.trendCourses — 기간 한정 트렌드를 찾기 탭에서도 (지난 주차 것 중 끝나지 않은 것은 유지)
+ */
+export async function uploadTrends(db, weekId, courses, today) {
+  const bySido = {}
+  for (const c of courses) (bySido[c.sido] ??= []).push(c)
+
+  const batch = db.batch()
+  for (const { name } of SIDO) {
+    const key = sidoKey(name)
+    batch.set(
+      db.doc(`coursePool/${weekId}_${key}`),
+      { weekId, sido: name, sidoKey: key, trendCourses: bySido[name] ?? [], trendsAt: FieldValue.serverTimestamp() },
+      { merge: true },
+    )
+  }
+  await batch.commit()
+
+  const windowEnd = addDays(today, 90)
+  let eventCount = 0
+  for (const { name } of SIDO) {
+    const ref = db.doc(`events/${sidoKey(name)}`)
+    const existing = (await ref.get()).data()?.trendCourses ?? []
+    const keep = existing.filter((c) => c.weekId !== weekId && c.period?.end >= today)
+    const add = (bySido[name] ?? []).filter((c) => c.period && c.period.end >= today && c.period.start <= windowEnd)
+    const trendCourses = [...keep, ...add]
+    eventCount += trendCourses.length
+    if (existing.length || trendCourses.length) await ref.set({ trendCourses }, { merge: true })
+  }
+  return { poolDocs: SIDO.length, eventCount }
 }
 
 /** 보관 기간이 지난 주차의 풀을 지운다. 지운 문서 수를 돌려준다. */

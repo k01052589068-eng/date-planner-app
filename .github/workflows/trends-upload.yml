@@ -1,0 +1,70 @@
+# C 파이프라인: data/trends/{weekId}.json 이 push 되면 검증 → 주변 식사·카페 보강 → 코스 풀·행사 캐시에 합친다
+# 필요한 Secrets: FIREBASE_SERVICE_ACCOUNT
+name: 트렌드 업로드
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/trends/*.json'
+  workflow_dispatch:
+    inputs:
+      week:
+        description: '주차 (예: 2026-W40). 비우면 이번 주 파일'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trends-upload
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: scripts
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # 이번 push 에서 바뀐 파일을 찾으려고
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: scripts/package-lock.json
+
+      - run: npm ci
+
+      - name: 단위 테스트
+        run: npm test
+
+      - name: 올릴 트렌드 파일 찾기
+        id: files
+        working-directory: .
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          WEEK: ${{ inputs.week }}
+        run: |
+          if [ "$EVENT" = "push" ]; then
+            # 추가·수정된 파일만 (지운 파일은 제외)
+            FILES=$(git diff --name-only --diff-filter=AM "$BEFORE" "$GITHUB_SHA" -- 'data/trends/*.json' || true)
+          elif [ -n "$WEEK" ]; then
+            FILES="data/trends/$WEEK.json"
+          fi
+          # scripts 폴더 기준 경로로
+          echo "files=$(echo $FILES | sed 's#data/trends/#../data/trends/#g')" >> "$GITHUB_OUTPUT"
+          echo "올릴 파일: ${FILES:-(이번 주 파일)}"
+
+      - name: 검증·업로드
+        if: steps.files.outputs.files != '' || github.event_name == 'workflow_dispatch'
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FILES: ${{ steps.files.outputs.files }}
+        run: npm run trends -- upload $FILES

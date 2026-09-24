@@ -2,7 +2,7 @@ import { doc, updateDoc } from 'firebase/firestore'
 import { db } from './firebase.js'
 
 // 명세 §5-2. 취향 이름은 코스 데이터의 themes 값과 같아야 한다.
-export const THEMES = ['맛집·카페', '전시·공연', '액티비티·체험', '자연·산책', '축제·시즌 이벤트', '실내(비 오는 날)', '드라이브']
+export { THEMES } from './shared/themes.js'
 
 // radiusKm: null = 전국
 export const RADIUS_OPTIONS = [

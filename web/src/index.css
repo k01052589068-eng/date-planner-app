@@ -955,3 +955,8 @@ a.btn {
 .diary-detail .button-row .btn {
   flex: 1;
 }
+
+.refresh-link {
+  display: block;
+  margin: 16px auto 0;
+}

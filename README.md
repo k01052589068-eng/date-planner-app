@@ -57,6 +57,21 @@ npm test                           # 주차·지역·분류·조합 단위 테�
 - 찾기 탭 캐시도 함께 올린다: `events/{지역}`(앞으로 90일 행사 코스), `places/{지역}`(즉석 조합용 장소, 압축 문자열)
 - 분류 → 취향 매핑: `web/src/shared/categories.js`, 조합 규칙: `web/src/shared/compose.js` (앱의 즉석 조합과 공용), 계절 키워드: `data/templates/seasons.json`
 
+## C 파이프라인 (주간 트렌드, 선택)
+
+매주 한 번 PC의 Claude Code에서 `/weekly-trends` 를 실행하면 이번 주 국내 데이트 트렌드를 웹에서 조사해
+`data/trends/{주차}.json` 을 만들고, 확인받은 뒤 push 한다. push 되면 `.github/workflows/trends-upload.yml` 이
+검증 → 주변 식사·카페 보강 → `coursePool/{주차}_{지역}.trendCourses`, `events/{지역}.trendCourses` 에 합친다.
+C 를 실행하지 않은 주에도 A 만으로 추천은 정상 동작한다.
+
+```bash
+cd scripts
+npm run trends -- info                                  # 이번 주 주차·계절
+npm run trends -- geocode ../data/trends/2026-W40.json  # 좌표 채우기 (KAKAO_REST_KEY 필요)
+npm run trends -- validate ../data/trends/2026-W40.json # 형식·기간·출처 검증
+npm run trends -- upload ../data/trends/2026-W40.json --dry-run  # 합칠 결과 미리 보기
+```
+
 ## 배포
 
 GitHub에 push하면 Netlify가 `netlify.toml` 설정대로 `web/`을 빌드해 자동 배포한다.

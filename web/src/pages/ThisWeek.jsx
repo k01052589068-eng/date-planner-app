@@ -118,6 +118,13 @@ export default function ThisWeek() {
       )}
 
       {hasBase && <RecsBody selected={selected} isCurrent={isCurrent} status={status} loading={!recent} onRetry={regenerate} />}
+
+      {/* 주중에 트렌드 코스(C)가 추가되면 이걸로 다시 받는다. 같은 데이터면 같은 결과가 나온다. */}
+      {isCurrent && current && (
+        <button type="button" className="btn-link refresh-link" onClick={regenerate} disabled={status === 'generating'}>
+          {status === 'generating' ? '추천 만드는 중…' : '최신 코스로 다시 추천받기'}
+        </button>
+      )}
     </section>
   )
 }

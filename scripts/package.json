@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "weekly": "node --env-file-if-exists=.env weekly.js",
+    "trends": "node --env-file-if-exists=.env trends.js",
     "test": "node --test"
   },
   "engines": {
