@@ -93,3 +93,250 @@ body {
   filter: none;
   opacity: 1;
 }
+
+/* ---------- 공통 요소 ---------- */
+:root {
+  --color-danger: #d93a3a;
+}
+
+h2.section-title {
+  margin: 28px 0 10px;
+  font-size: 15px;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+.muted {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.error {
+  margin-top: 10px;
+  color: var(--color-danger);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg);
+}
+
+.card-label {
+  font-weight: 600;
+}
+
+.card.notice {
+  background: var(--color-surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card.row {
+  flex-direction: row;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-google {
+  border-color: #dadce0;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-small {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.btn-link {
+  align-self: center;
+  padding: 8px;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+}
+
+.button-row .btn-primary {
+  flex: 1;
+}
+
+.input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px; /* 16px 미만이면 iOS가 입력 시 화면을 확대한다 */
+}
+
+.input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+.avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.avatar-pair {
+  display: flex;
+}
+
+.avatar-pair > :last-child {
+  margin-left: -10px;
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+/* ---------- 로그인 · 온보딩 ---------- */
+.centered-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  max-width: 400px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+.brand {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.brand h1 {
+  margin: 12px 0 8px;
+  font-size: 24px;
+}
+
+.brand-icon {
+  font-size: 48px;
+}
+
+.brand-icon.splash {
+  align-self: center;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ---------- 커플 연결 ---------- */
+.invite-code {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+.join-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.join-form .code-input {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.join-form .error {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+.page > .card,
+.page > .muted {
+  margin-bottom: 12px;
+}

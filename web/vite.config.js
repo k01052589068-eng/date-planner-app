@@ -33,6 +33,8 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // 로그인 핸들러(/__/auth/*)는 서비스 워커가 가로채지 않고 네트워크(Netlify 프록시)로 보낸다
+        navigateFallbackDenylist: [/^\/__\//],
       },
     }),
   ],

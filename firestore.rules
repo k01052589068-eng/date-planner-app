@@ -1,0 +1,144 @@
+rules_version = '2';
+
+// 데이터 구조
+//   users/{uid}                  내 커플 공간 포인터 { coupleId }
+//   couples/{coupleId}           { members[], memberInfo{uid:{name,photoURL}}, createdBy, createdAt, settings?, invite?, joinedWithInvite? }
+//   couples/{coupleId}/**        다이어리·추천 캐시 등 (구성원 전용)
+//   invites/{code}               { coupleId, createdBy, createdAt, expiresAt, used, usedBy?, usedAt? }
+//   coursePool/**, events/**     GitHub Actions(Admin SDK)만 씀
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function coupleDoc(coupleId) {
+      return /databases/$(database)/documents/couples/$(coupleId);
+    }
+
+    function inviteDoc(code) {
+      return /databases/$(database)/documents/invites/$(code);
+    }
+
+    function isMemberOf(coupleId) {
+      return signedIn() && request.auth.uid in get(coupleDoc(coupleId)).data.members;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // memberInfo 는 내 항목만 바꿀 수 있다
+    function onlyOwnMemberInfoChanged() {
+      return !('memberInfo' in changedKeys())
+        || request.resource.data.memberInfo.diff(resource.data.memberInfo).affectedKeys().hasOnly([request.auth.uid]);
+    }
+
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /couples/{coupleId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+
+      // 나 혼자인 공간만 만들 수 있다
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['members', 'memberInfo', 'createdBy', 'createdAt', 'settings'])
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.memberInfo.keys().hasOnly([request.auth.uid])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if signedIn() && (isMemberEdit() || isJoining(coupleId) || isLeaving());
+
+      allow delete: if false;
+
+      // 구성원: 설정·초대 코드 등 수정. 구성원 목록과 생성 정보는 바꿀 수 없다.
+      function isMemberEdit() {
+        return request.auth.uid in resource.data.members
+          && !changedKeys().hasAny(['members', 'createdBy', 'createdAt', 'joinedWithInvite'])
+          && onlyOwnMemberInfoChanged();
+      }
+
+      // 합류: 같은 트랜잭션에서 유효한 초대 코드를 내 것으로 사용 처리해야 한다. 최대 2명.
+      function isJoining(coupleId) {
+        let code = request.resource.data.joinedWithInvite;
+        let invite = get(inviteDoc(code)).data;
+        return !(request.auth.uid in resource.data.members)
+          && resource.data.members.size() == 1
+          && request.resource.data.members == resource.data.members.concat([request.auth.uid])
+          && changedKeys().hasOnly(['members', 'memberInfo', 'joinedWithInvite', 'invite'])
+          && !('invite' in request.resource.data)
+          && onlyOwnMemberInfoChanged()
+          && invite.coupleId == coupleId
+          && invite.used == false
+          && invite.expiresAt > request.time
+          && getAfter(inviteDoc(code)).data.usedBy == request.auth.uid;
+      }
+
+      // 연결 해제: 나만 빠져나갈 수 있다
+      function isLeaving() {
+        return request.auth.uid in resource.data.members
+          && request.resource.data.members == resource.data.members.removeAll([request.auth.uid])
+          && changedKeys().hasOnly(['members']);
+      }
+
+      // 하위 컬렉션만 (rules v2 에서 {document=**} 단독은 빈 경로, 즉 커플 문서 자신과도 매칭된다)
+      match /{subcollection}/{document=**} {
+        allow read, write: if isMemberOf(coupleId);
+      }
+    }
+
+    match /invites/{code} {
+      // 코드를 아는 사람만 조회할 수 있고, 목록 조회는 막는다
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if isValidNewInvite(code);
+
+      allow update: if isRedeeming()
+        // 만료·사용된 코드 자리는 새 초대로 덮어쓸 수 있다
+        || ((resource.data.used == true || resource.data.expiresAt <= request.time) && isValidNewInvite(code));
+
+      allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+
+      function isValidNewInvite(code) {
+        let d = request.resource.data;
+        return signedIn()
+          && code.matches('^[A-HJKMNP-Z2-9]{6}$')
+          && d.keys().hasOnly(['coupleId', 'createdBy', 'createdAt', 'expiresAt', 'used'])
+          && d.createdBy == request.auth.uid
+          && d.createdAt == request.time
+          && d.used == false
+          && d.expiresAt is timestamp
+          && d.expiresAt > request.time
+          && d.expiresAt <= request.time + duration.value(25, 'h')
+          && isMemberOf(d.coupleId);
+      }
+
+      // 사용 처리: 같은 트랜잭션에서 내가 그 커플의 구성원이 되어야 한다
+      function isRedeeming() {
+        return signedIn()
+          && resource.data.used == false
+          && resource.data.expiresAt > request.time
+          && resource.data.createdBy != request.auth.uid
+          && changedKeys().hasOnly(['used', 'usedBy', 'usedAt'])
+          && request.resource.data.used == true
+          && request.resource.data.usedBy == request.auth.uid
+          && request.resource.data.usedAt == request.time
+          && request.auth.uid in getAfter(coupleDoc(resource.data.coupleId)).data.members;
+      }
+    }
+
+    match /coursePool/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /events/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+  }
+}
