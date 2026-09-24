@@ -1,0 +1,17 @@
+{
+  "_comment": "월별 계절 키워드. A 파이프라인이 TourAPI searchKeyword2 로 찾은 장소를 그 주 코스 풀에 우선 넣고 seasonNote 를 붙인다.",
+  "months": {
+    "1": [{ "keyword": "눈꽃", "note": "겨울 눈꽃 명소" }, { "keyword": "얼음", "note": "겨울 한정" }, { "keyword": "온천", "note": "추운 날 온천" }],
+    "2": [{ "keyword": "눈꽃", "note": "겨울 눈꽃 명소" }, { "keyword": "동백", "note": "동백꽃 시즌" }, { "keyword": "온천", "note": "추운 날 온천" }],
+    "3": [{ "keyword": "매화", "note": "매화 시즌" }, { "keyword": "동백", "note": "동백꽃 시즌" }, { "keyword": "산수유", "note": "봄꽃 시즌" }],
+    "4": [{ "keyword": "벚꽃", "note": "벚꽃 명소" }, { "keyword": "유채", "note": "유채꽃 시즌" }, { "keyword": "튤립", "note": "봄꽃 시즌" }],
+    "5": [{ "keyword": "장미", "note": "장미 시즌" }, { "keyword": "철쭉", "note": "철쭉 시즌" }, { "keyword": "수목원", "note": "초록 산책" }],
+    "6": [{ "keyword": "수국", "note": "수국 시즌" }, { "keyword": "야경", "note": "여름밤 야경" }, { "keyword": "계곡", "note": "이른 더위 피하기" }],
+    "7": [{ "keyword": "해수욕장", "note": "여름 바다" }, { "keyword": "계곡", "note": "여름 계곡" }, { "keyword": "야경", "note": "여름밤 야경" }],
+    "8": [{ "keyword": "해수욕장", "note": "여름 바다" }, { "keyword": "계곡", "note": "여름 계곡" }, { "keyword": "연꽃", "note": "연꽃 시즌" }],
+    "9": [{ "keyword": "코스모스", "note": "가을꽃 시즌" }, { "keyword": "억새", "note": "가을 억새" }, { "keyword": "야경", "note": "선선한 밤 야경" }],
+    "10": [{ "keyword": "단풍", "note": "가을 단풍" }, { "keyword": "억새", "note": "가을 억새" }, { "keyword": "핑크뮬리", "note": "가을 한정" }],
+    "11": [{ "keyword": "단풍", "note": "늦가을 단풍" }, { "keyword": "은행나무", "note": "은행잎 시즌" }, { "keyword": "억새", "note": "가을 억새" }],
+    "12": [{ "keyword": "일루미네이션", "note": "겨울 불빛" }, { "keyword": "빛축제", "note": "겨울 불빛" }, { "keyword": "야경", "note": "연말 야경" }]
+  }
+}

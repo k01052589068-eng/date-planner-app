@@ -15,3 +15,7 @@ serviceAccountKey.json
 Thumbs.db
 .vscode/
 *.log
+
+# 파이프라인 로컬 결과물
+data/cache/
+data/output/
