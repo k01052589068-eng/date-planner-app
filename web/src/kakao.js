@@ -1,5 +1,5 @@
 // 카카오맵 JavaScript SDK 로더. 키는 카카오 디벨로퍼스에 등록한 도메인에서만 동작하므로 공개돼도 된다.
-export const KAKAO_JS_KEY = '9acc3b65db5bcedf2151c70bc71d674d'
+export const KAKAO_JS_KEY = 'e54cf084f840e3137107b95bd9e3d8b6'
 
 let loading = null
 
