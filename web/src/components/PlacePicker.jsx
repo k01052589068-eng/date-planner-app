@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { KAKAO_LOAD_ERROR, loadKakao } from '../kakao.js'
+import { getCurrentPlace } from '../currentLocation.js'
 import { normalizeSido } from '../regions.js'
 
 /**
@@ -71,47 +72,16 @@ export default function PlacePicker({ title = '위치 검색', onSelect, onClose
     })
   }
 
-  function useCurrentLocation() {
-    if (!navigator.geolocation) {
-      setMessage('이 브라우저에서는 현재 위치를 쓸 수 없어요.')
-      return
-    }
+  async function handleCurrentLocation() {
     setLocating(true)
     setMessage(null)
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        try {
-          const kakao = await loadKakao()
-          new kakao.maps.services.Geocoder().coord2RegionCode(coords.longitude, coords.latitude, (res, status) => {
-            setLocating(false)
-            if (status !== kakao.maps.services.Status.OK || !res.length) {
-              setMessage('현재 위치의 주소를 찾지 못했어요. 검색으로 지정해 주세요.')
-              return
-            }
-            const r = res.find((x) => x.region_type === 'H') || res[0] // H: 행정동
-            onSelect({
-              name: [r.region_2depth_name, r.region_3depth_name].filter(Boolean).join(' ') || r.address_name,
-              address: r.address_name,
-              lat: coords.latitude,
-              lng: coords.longitude,
-              sido: normalizeSido(r.region_1depth_name),
-            })
-          })
-        } catch {
-          setLocating(false)
-          setMessage(KAKAO_LOAD_ERROR)
-        }
-      },
-      (err) => {
-        setLocating(false)
-        setMessage(
-          err.code === err.PERMISSION_DENIED
-            ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 허용하거나 검색으로 지정해 주세요.'
-            : '현재 위치를 가져오지 못했어요. 검색으로 지정해 주세요.',
-        )
-      },
-      { timeout: 10000, maximumAge: 10 * 60 * 1000 },
-    )
+    try {
+      onSelect(await getCurrentPlace())
+    } catch (e) {
+      setMessage(e.message)
+    } finally {
+      setLocating(false)
+    }
   }
 
   return (
@@ -127,12 +97,11 @@ export default function PlacePicker({ title = '위치 검색', onSelect, onClose
           placeholder="동네, 역, 장소 이름 (예: 송도)"
           aria-label="장소 검색어"
           enterKeyHint="search"
-          autoFocus
         />
       </div>
 
       <div className="sheet-body">
-        <button type="button" className="btn btn-block" onClick={useCurrentLocation} disabled={locating}>
+        <button type="button" className="btn btn-block" onClick={handleCurrentLocation} disabled={locating}>
           📍 {locating ? '현재 위치 확인 중…' : '현재 위치로 지정'}
         </button>
 

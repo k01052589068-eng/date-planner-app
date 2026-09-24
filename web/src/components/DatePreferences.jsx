@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useCouple } from '../CoupleProvider.jsx'
+import { getCurrentPlace } from '../currentLocation.js'
 import {
   NOVELTY_OPTIONS,
   RADIUS_OPTIONS,
@@ -39,6 +40,19 @@ export default function DatePreferences() {
   )
   const closePicker = useCallback(() => setPicking(false), [])
 
+  const [locating, setLocating] = useState(false)
+  async function handleCurrentLocation() {
+    setLocating(true)
+    setError(null)
+    try {
+      save('base', await getCurrentPlace())
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLocating(false)
+    }
+  }
+
   function toggleTheme(theme) {
     const next = settings.themes.includes(theme)
       ? settings.themes.filter((t) => t !== theme)
@@ -59,20 +73,20 @@ export default function DatePreferences() {
                 <p className="strong">{settings.base.name}</p>
                 <p className="muted small">{settings.base.address}</p>
               </div>
-              <button type="button" className="btn btn-small" onClick={() => setPicking(true)}>
-                변경
-              </button>
             </div>
             <BaseMap lat={settings.base.lat} lng={settings.base.lng} radiusKm={settings.radiusKm} />
           </>
         ) : (
-          <>
-            <p className="muted small">이 위치를 중심으로 가까운 데이트 코스를 추천해요. 주로 만나는 동네를 지정해 주세요.</p>
-            <button type="button" className="btn btn-primary btn-block" onClick={() => setPicking(true)}>
-              기준 위치 지정하기
-            </button>
-          </>
+          <p className="muted small">이 위치를 중심으로 가까운 데이트 코스를 추천해요. 주로 만나는 동네를 지정해 주세요.</p>
         )}
+        <div className="button-row">
+          <button type="button" className="btn btn-primary" onClick={() => setPicking(true)}>
+            🔍 {settings.base ? '위치 변경' : '위치 검색'}
+          </button>
+          <button type="button" className="btn" onClick={handleCurrentLocation} disabled={locating}>
+            📍 {locating ? '확인 중…' : '현재 위치'}
+          </button>
+        </div>
       </div>
 
       <div className="card">
