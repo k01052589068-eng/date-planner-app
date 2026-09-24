@@ -1,7 +1,7 @@
 import { applicationDefault, cert, initializeApp } from 'firebase-admin/app'
 import { FieldValue, getFirestore } from 'firebase-admin/firestore'
-import { sidoKey } from '../../web/src/regions.js'
-import { weeksBefore } from './week.js'
+import { sidoKey } from '../../web/src/shared/regions.js'
+import { weeksBefore } from '../../web/src/shared/week.js'
 
 const KEEP_WEEKS = 4 // 이번 주 + 지난 4주 풀을 남긴다 (명세: 지난 주차는 4주 후 삭제)
 const MAX_DOC_BYTES = 900 * 1024 // Firestore 문서 한도 1MiB 에 여유를 둔다

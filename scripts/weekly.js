@@ -6,12 +6,12 @@
 //   npm run weekly -- --cache            오늘 받아 둔 TourAPI 응답(data/cache/)을 재사용 (개발용)
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { parseArgs } from 'node:util'
-import { sidoKey } from '../web/src/regions.js'
+import { sidoKey } from '../web/src/shared/regions.js'
 import { composeWeek } from './lib/compose.js'
 import { normalizePlace } from './lib/places.js'
 import { TourApi } from './lib/tourapi.js'
 import { deleteOldPools, initFirestore, uploadPools } from './lib/upload.js'
-import { addDays, kstDate, toCompact, weekFromId, weekOf } from './lib/week.js'
+import { addDays, kstDate, toCompact, weekFromId, weekOf } from '../web/src/shared/week.js'
 
 const ROOT = new URL('../', import.meta.url)
 const PLACE_TYPES = { 12: '관광지', 14: '문화시설', 28: '레포츠', 39: '음식점' }

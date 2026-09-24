@@ -1,6 +1,6 @@
-import { SIDO, sidoKey } from '../../web/src/regions.js'
+import { SIDO, sidoKey } from '../../web/src/shared/regions.js'
 import { GridIndex } from './geo.js'
-import { seededRandom, shuffle } from './random.js'
+import { seededRandom, shuffle } from '../../web/src/shared/random.js'
 
 // 코스 조합 규칙 (명세 §5-3): 메인 1곳 + 주변 식사/카페 1곳 + 선택 1곳
 const FOOD_RADIUS_KM = 2

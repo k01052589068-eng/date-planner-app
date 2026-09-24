@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { normalizeSido, sidoFromLDong } from '../../web/src/regions.js'
+import { normalizeSido, sidoFromLDong } from '../../web/src/shared/regions.js'
 import { composeWeek } from '../lib/compose.js'
 import { normalizePlace } from '../lib/places.js'
-import { kstDate, weekFromId, weekOf, weeksBefore } from '../lib/week.js'
+import { kstDate, weekFromId, weekOf, weeksBefore } from '../../web/src/shared/week.js'
 
 describe('주차', () => {
   test('월~일, ISO 주차', () => {

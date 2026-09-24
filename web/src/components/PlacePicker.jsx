@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { KAKAO_LOAD_ERROR, loadKakao } from '../kakao.js'
 import { getCurrentPlace } from '../currentLocation.js'
-import { normalizeSido } from '../regions.js'
+import { normalizeSido } from '../shared/regions.js'
 
 /**
  * 카카오 장소 검색으로 위치 하나를 고르는 전체 화면 창.

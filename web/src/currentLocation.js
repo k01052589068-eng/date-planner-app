@@ -1,5 +1,5 @@
 import { KAKAO_LOAD_ERROR, loadKakao } from './kakao.js'
-import { normalizeSido } from './regions.js'
+import { normalizeSido } from './shared/regions.js'
 
 /** 기기 위치를 받아 카카오 주소 변환으로 { name, address, lat, lng, sido } 를 만든다. 실패하면 안내 문구를 담은 Error. */
 export async function getCurrentPlace() {

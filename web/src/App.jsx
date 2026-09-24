@@ -6,6 +6,7 @@ import Onboarding from './pages/Onboarding.jsx'
 import ThisWeek from './pages/ThisWeek.jsx'
 import Search from './pages/Search.jsx'
 import Diary from './pages/Diary.jsx'
+import DiaryNew from './pages/DiaryNew.jsx'
 import Settings from './pages/Settings.jsx'
 
 const TABS = [
@@ -43,6 +44,7 @@ function MainTabs() {
           <Route path="/" element={<ThisWeek />} />
           <Route path="/search" element={<Search />} />
           <Route path="/diary" element={<Diary />} />
+          <Route path="/diary/new" element={<DiaryNew />} />
           <Route path="/settings" element={<Settings />} />
           {/* 초대 링크: 혼자 쓰는 중이면 설정의 합류 폼으로 */}
           <Route path="/join" element={<Navigate to={partner ? '/' : '/settings'} replace />} />

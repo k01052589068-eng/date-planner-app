@@ -1,5 +1,5 @@
-import { normalizeSido, sidoFromLDong } from '../../web/src/regions.js'
-import { fromCompact } from './week.js'
+import { normalizeSido, sidoFromLDong } from '../../web/src/shared/regions.js'
+import { fromCompact } from '../../web/src/shared/week.js'
 
 // TourAPI 신 분류체계(lclsSystm) 코드 앞부분 → 코스에서의 역할.
 // 더 긴(구체적인) 접두어가 먼저 맞도록 긴 것부터 검사한다.
@@ -105,7 +105,8 @@ function foodKind(lcls) {
 export function normalizePlace(item) {
   const lat = Number(item.mapy)
   const lng = Number(item.mapx)
-  if (!lat || !lng) return null
+  // 좌표가 없거나 한국 밖으로 찍힌 항목(원본 데이터 오류)은 버린다
+  if (!(lat >= 33 && lat <= 38.7 && lng >= 124.5 && lng <= 132)) return null
   // 주소가 법정동 코드보다 정확하다 (코드가 틀린 항목이 드물게 있음)
   const sido = normalizeSido(item.addr1) ?? sidoFromLDong(item.lDongRegnCd)
   if (!sido) return null
@@ -121,7 +122,7 @@ export function normalizePlace(item) {
     lat,
     lng,
     lcls,
-    image: item.firstimage || '',
+    image: (item.firstimage || '').replace(/^http:\/\//, 'https://'), // 앱(https)에서 섞인 콘텐츠로 막히지 않게
   }
   if (item.eventstartdate && item.eventenddate) {
     place.period = { start: fromCompact(item.eventstartdate), end: fromCompact(item.eventenddate) }
