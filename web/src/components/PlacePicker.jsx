@@ -69,6 +69,7 @@ export default function PlacePicker({ title = '위치 검색', onSelect, onClose
       lat: Number(p.y),
       lng: Number(p.x),
       sido: normalizeSido(p.address_name),
+      kakaoId: p.id,
     })
   }
 

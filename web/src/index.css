@@ -688,3 +688,270 @@ a.btn {
   margin-left: 4px;
   color: var(--color-primary);
 }
+
+/* ---------- 다이어리 ---------- */
+.page-head {
+  margin-bottom: 12px;
+}
+
+.page-head h1 {
+  margin: 8px 0;
+}
+
+.segmented {
+  display: flex;
+  margin-bottom: 16px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.segmented button {
+  flex: 1;
+  min-height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented button.selected {
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.stars {
+  color: #f5b301;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.stars-small {
+  font-size: 13px;
+}
+
+.stars-large {
+  display: block;
+  margin: -6px 0 12px;
+  font-size: 20px;
+}
+
+.stars-empty {
+  color: var(--color-border);
+}
+
+.stars-input {
+  display: flex;
+  gap: 4px;
+}
+
+.stars-input button {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--color-border);
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stars-input button.on {
+  color: #f5b301;
+}
+
+.timeline-head {
+  margin-bottom: -12px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.timeline-title {
+  gap: 8px;
+}
+
+.timeline-memo {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.diary-map {
+  position: relative;
+  height: calc(100dvh - var(--tabbar-height) - env(safe-area-inset-bottom) - 170px);
+  min-height: 320px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.map-empty {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+}
+
+.map-sheet {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 55%;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--color-bg);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
+}
+
+.sheet-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.icon-btn-small {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+.diary-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.field .input,
+.field .input-suffix {
+  width: 100%;
+}
+
+.textarea {
+  min-height: 72px;
+  padding: 12px 14px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.input-suffix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.place-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place-chips li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 12px;
+  background: var(--color-surface);
+  font-size: 14px;
+}
+
+.diary-form .button-row .btn {
+  flex: 1;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.diary-detail h1 {
+  margin: 4px 0 10px;
+}
+
+.diary-memo {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.diary-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 8px 0 20px;
+  font-size: 14px;
+}
+
+.diary-meta dt {
+  color: var(--color-muted);
+}
+
+.diary-meta dd {
+  margin: 0;
+}
+
+.diary-detail .button-row .btn {
+  flex: 1;
+}

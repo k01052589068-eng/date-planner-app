@@ -28,3 +28,21 @@ export function hopLabel(km) {
 export function kakaoMapLink({ name, lat, lng }) {
   return `https://map.kakao.com/link/map/${encodeURIComponent(name)},${lat},${lng}`
 }
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+
+/** '2026-09-21' → '9월 21일 (월)' */
+export function dateWithWeekday(ymd) {
+  const day = new Date(`${ymd}T00:00:00Z`).getUTCDay()
+  return `${monthDay(ymd)} (${WEEKDAYS[day]})`
+}
+
+/** '2026-09' → '2026년 9월' */
+export function monthLabel(ym) {
+  const [y, m] = ym.split('-').map(Number)
+  return `${y}년 ${m}월`
+}
+
+export function won(n) {
+  return `${n.toLocaleString('ko-KR')}원`
+}
